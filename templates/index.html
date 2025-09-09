@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Model FAIRness Evaluator</title>
+    <style>
+        /* Styling the body with a light blue background */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #007bff; /* Light blue background */
+        }
+
+        /* Centered container with shadow and white background */
+        .container {
+            text-align: center;
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 26, 65, 0.993);
+            max-width: 600px;
+            width: 90%;
+        }
+
+        /* Styled title */
+        h1 {
+            font-size: 28px;
+            color: #007bff;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Description under title */
+        p.description {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        /* Drop area styling */
+        #drop-area {
+            border: 2px dashed #ccc;
+            background-color: #fafafa;
+            padding: 40px;
+            border-radius: 10px;
+            transition: border-color 0.3s ease;
+        }
+
+        #drop-area p {
+            font-size: 16px;
+            color: #777;
+        }
+
+        #drop-area.highlight {
+            border-color: #28a745;
+        }
+
+        /* Hidden file input */
+        #fileElem {
+            display: none;
+        }
+
+        /* Show selected file name */
+        #file-name {
+            margin-top: 20px;
+            font-size: 16px;
+            color: #007bff;
+        }
+
+        /* Button styling */
+        button {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-top: 20px;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        /* Result styling */
+        #result {
+            margin-top: 30px;
+            padding: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            display: none;  /* Initially hidden */
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        /* Success result (green) */
+        #result.success {
+            color: #28a745;
+            background-color: #d4edda;
+            border: 2px solid #28a745;
+        }
+
+        /* Error result (red) */
+        #result.error {
+            color: #dc3545; /* Red text */
+            background-color: #f8d7da; /* Light red background */
+            border: 2px solid #dc3545;
+        }
+
+        /* Responsive styling */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            #drop-area {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Data Model FAIRness Evaluator</h1>
+        <p class="description">Validate your data model according to WATERVERSE FAIR guidelines</p>
+
+        <div id="drop-area">
+            <p>Drag & drop a JSON file here, or <button type="button">click to select a file</button></p>
+            <input type="file" id="fileElem" accept=".json">
+            <p id="file-name"></p>
+        </div>
+
+        <button id="check-button" disabled>Check</button>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        let dropArea = document.getElementById('drop-area');
+        let fileElem = document.getElementById('fileElem');
+        let result = document.getElementById('result');
+        let fileNameDisplay = document.getElementById('file-name');
+        let checkButton = document.getElementById('check-button');
+        let selectedFile = null; // Store the selected file here
+
+        // Highlight drop area on drag events
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        // Highlight drop area when dragging over it
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, () => dropArea.classList.add('highlight'), false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, () => dropArea.classList.remove('highlight'), false);
+        });
+
+        dropArea.addEventListener('drop', handleDrop, false);
+        dropArea.querySelector('button').addEventListener('click', () => fileElem.click(), false);
+        fileElem.addEventListener('change', handleFiles, false);
+        checkButton.addEventListener('click', () => uploadFile(selectedFile), false);
+
+        function handleFiles() {
+            let file = this.files[0];
+            handleFileSelect(file);
+        }
+
+        function handleDrop(e) {
+            let dt = e.dataTransfer;
+            let file = dt.files[0];
+            handleFileSelect(file);
+        }
+
+        // Store selected file and update UI
+        function handleFileSelect(file) {
+            selectedFile = file;
+            fileNameDisplay.textContent = `Selected file: ${file.name}`;
+            checkButton.disabled = false;  // Enable the check button
+            result.style.display = 'none';  // Hide the result area
+        }
+
+        function uploadFile(file) {
+            let formData = new FormData();
+            formData.append('file', file);
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            }).then(response => response.json())
+              .then(data => {
+                if (data.message) {
+                    result.textContent = data.message;
+                    result.className = 'success';
+                    result.style.display = 'block';
+                } else if (data.error) {
+                    result.textContent = data.error;
+                    result.className = 'error';
+                    result.style.display = 'block';
+                }
+              })
+              .catch(err => {
+                result.textContent = 'An error occurred';
+                result.className = 'error';
+                result.style.display = 'block';
+              });
+        }
+    </script>
+
+</body>
+</html>
