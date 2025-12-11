@@ -1,14 +1,14 @@
 # Data Model FAIRness Evaluator (User Guide)
 
 ## Table of Contents
-- Overview
-- Functionality
-- Requirements
-- How it works
-- Setting up the Docker
-- Future Improvements
-- Acknowledgments
-
+- [Overview](#overview)
+- [Functionality](#functionality)
+- [Requirements](#requirements)
+- [How it works](#how-it-works)
+- [Setting up the Docker](#setting-up-the-docker)
+- [Future Improvements](#future-improvements)
+- [Acknowledgments](#acknowledgments)
+  
 ## Overview
 The Data Model FAIRness Evaluator is a validation tool designed to assess NGSI-LD datasets for WATERVERSE FAIR compliance through geolocation-based validation. It operates as an API endpoint that receives Data Model JSON and returns evaluation results, supporting improved data quality and consistency across the WATERVERSE platform.
 
